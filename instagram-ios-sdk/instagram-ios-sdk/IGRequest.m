@@ -7,6 +7,7 @@
 //
 
 #import "IGRequest.h"
+#import "JSON.h"
 
 
 static NSString* kUserAgent = @"InstagramConnect";
@@ -23,6 +24,7 @@ NSString* const InstagramErrorDomain = @"instagramErrorDomain";
 
 @end
 
+
 @implementation IGRequest
 
 @synthesize url = _url;
@@ -34,7 +36,15 @@ NSString* const InstagramErrorDomain = @"instagramErrorDomain";
 @synthesize state = _state;
 @synthesize error = _error;
 
-
++ (NSOperationQueue *)responsesQueue {
+    static NSOperationQueue *queue = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = [NSOperationQueue new];
+        queue.name = @"com.capablebits.wallgram.InstagramResponsesQueue";
+    });
+    return queue;
+}
 #pragma mark - static
 
 + (IGRequest *)getRequestWithParams:(NSMutableDictionary *) params
@@ -86,7 +96,7 @@ NSString* const InstagramErrorDomain = @"instagramErrorDomain";
         [pairs addObject:[NSString stringWithFormat:@"%@=%@", key, escaped_value]];
     }
     NSString* query = [pairs componentsJoinedByString:@"&"];
-    NSLog(@"URL: %@", [NSString stringWithFormat:@"%@%@%@", baseUrl, queryPrefix, query]);
+    
     return [NSString stringWithFormat:@"%@%@%@", baseUrl, queryPrefix, query];
 }
 
@@ -157,8 +167,11 @@ NSString* const InstagramErrorDomain = @"instagramErrorDomain";
 }
 
 - (id)parseJsonResponse:(NSData*)data error:(NSError**)error {
-    id result = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableLeaves error:nil];
     
+    NSString* responseString = [[NSString alloc] initWithData:data
+                                                     encoding:NSUTF8StringEncoding];
+    SBJSON *jsonParser = [SBJSON new]; 
+    id result = [jsonParser objectWithString:responseString];
     NSDictionary* meta = (NSDictionary*)[result objectForKey:@"meta"];
     if ( meta && [[meta objectForKey:@"code"] integerValue] == 200) {
         //result = [result objectForKey:@"data"];
@@ -182,7 +195,6 @@ NSString* const InstagramErrorDomain = @"instagramErrorDomain";
     if ([_delegate respondsToSelector:@selector(request:didFailWithError:)]) {
         [_delegate request:self didFailWithError:error];
     }
-    self.error = error;
     self.state = kIGRequestStateError;
 }
 
@@ -237,6 +249,7 @@ NSString* const InstagramErrorDomain = @"instagramErrorDomain";
     }
     
     _connection = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+    [_connection setDelegateQueue:[self.class responsesQueue]];
     self.state = kIGRequestStateLoading;
 }
 
@@ -279,7 +292,6 @@ NSString* const InstagramErrorDomain = @"instagramErrorDomain";
     self.responseText = nil;
     self.connection = nil;
     
-    self.error = error;
     self.state = kIGRequestStateError;
 }
 

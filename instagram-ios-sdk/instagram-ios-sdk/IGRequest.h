@@ -33,7 +33,7 @@ extern NSString* const InstagramErrorDomain;
 @property(nonatomic, strong) NSMutableData* responseText;
 @property(nonatomic, readonly) IGRequestState state;
 @property(nonatomic, strong) NSError* error;
-
+@property(nonatomic, strong) NSDictionary *userInfo;
 +(NSString*)serializeURL:(NSString*)baseUrl
                   params:(NSDictionary*)params;
 

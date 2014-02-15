@@ -27,13 +27,18 @@
 
 -(BOOL)isSessionValid;
 
--(IGRequest*)requestWithParams:(NSMutableDictionary*)params
+-(IGRequest*)requestWithParams:(NSDictionary *)params
                       delegate:(id<IGRequestDelegate>)delegate;
 
--(IGRequest*)requestWithMethodName:(NSString*)methodName
-                            params:(NSMutableDictionary*)params
-                        httpMethod:(NSString*)httpMethod
+-(IGRequest*)requestWithMethodName:(NSString *)methodName
+                            params:(NSDictionary *)params
+                        httpMethod:(NSString *)httpMethod
                           delegate:(id<IGRequestDelegate>)delegate;
+
+- (IGRequest*)openUrl:(NSString *)url
+               params:(NSMutableDictionary *)params
+           httpMethod:(NSString *)httpMethod
+             delegate:(id<IGRequestDelegate>)delegate;
 
 @end
 
